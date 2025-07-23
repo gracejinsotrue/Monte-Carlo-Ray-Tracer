@@ -3,7 +3,7 @@
 
 #include "vec3.h"
 
-#include <iostream>
+// #include <iostream> assume rtwekend.h inclusion for color.h
 
 using color = vec3;
 

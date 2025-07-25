@@ -109,7 +109,7 @@ private:
         {
             // if a matreial bounces off a matrial & keeps 100% of its color then we say matrial is white, etc.
             // set this to return 50% of its color for now to rturn 50% of the color from a bounche.
-            vec3 direction = random_on_hemisphere(rec.normal);
+            vec3 direction = rec.normal + random_unit_vector();
             return 0.5 * ray_color(ray(rec.p, direction), depth - 1, world);
             // return 0.5 * (rec.normal + color(1, 1, 1));
         }

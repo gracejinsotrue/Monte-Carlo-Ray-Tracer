@@ -50,6 +50,16 @@ public:
     {
         return e[0] * e[0] + e[1] * e[1] + e[2] * e[2];
     }
+    // just random utiliy funcitons to gnerate arbitrary random vectors
+    static vec3 random()
+    {
+        return vec3(random_double(), random_double(), random_double());
+    }
+
+    static vec3 random(double min, double max)
+    {
+        return vec3(random_double(min, max), random_double(min, max), random_double(min, max));
+    }
 };
 
 // point3 is just an alias for vec3, but useful for geometric clarity in the code.
@@ -109,4 +119,27 @@ inline vec3 unit_vector(const vec3 &v)
     return v / v.length();
 }
 
+inline vec3 random_unit_vector()
+{
+    // simple rejection algorithm where we keep trying until we have a unit vector bound within the pshere
+    while (true)
+    {
+        auto p = vec3::random(-1, 1);
+        auto lensq = p.length_squared();
+        if (1e-160 < lensq && lensq <= 1) // the 1e-160 is pretty important becuse there is a chance i will underflow if not
+                                          // if all three coordinates are small enough (that is, very near the center of the sphere), the norm of the vector will be zero, and thus normalizing will yield the bogus vector [±∞,±∞,±∞]
+
+            return p / sqrt(lensq);
+    }
+}
+// take the dot product of surface norml and random vector to determine if it is in the correct hemisphre
+// if dot product negtive we need to invert the vector to be on the correct hmisphere!
+inline vec3 random_on_hemisphere(const vec3 &normal)
+{
+    vec3 on_unit_sphere = random_unit_vector();
+    if (dot(on_unit_sphere, normal) > 0.0) // this menans the dot product is on the same hemisphere as the normal
+        return on_unit_sphere;
+    else
+        return -on_unit_sphere;
+}
 #endif

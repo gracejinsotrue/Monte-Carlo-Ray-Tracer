@@ -3,6 +3,7 @@
 
 #include "hittable.h"
 #include "rtweekend.h"
+#include "material.h"
 
 class camera
 {
@@ -107,11 +108,11 @@ private:
 
         if (world.hit(r, interval(0.001, infinity), rec))
         {
-            // if a matreial bounces off a matrial & keeps 100% of its color then we say matrial is white, etc.
-            // set this to return 50% of its color for now to rturn 50% of the color from a bounche.
-            vec3 direction = rec.normal + random_unit_vector();
-            return 0.5 * ray_color(ray(rec.p, direction), depth - 1, world);
-            // return 0.5 * (rec.normal + color(1, 1, 1));
+            ray scattered;
+            color attenuation;
+            if (rec.mat->scatter(r, rec, attenuation, scattered))
+                return attenuation * ray_color(scattered, depth - 1, world);
+            return color(0, 0, 0);
         }
 
         vec3 unit_direction = unit_vector(r.direction());

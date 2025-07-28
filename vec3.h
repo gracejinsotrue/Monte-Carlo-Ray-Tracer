@@ -153,7 +153,17 @@ inline vec3 reflect(const vec3 &v, const vec3 &n)
 {
     return v - 2 * dot(v, n) * n;
 }
-
+// an asy parametr is to specifiy th eangle o the cone with apex at viewpoint center and defocus dissk at camera center
+// since we are choosing random points from defocus disk, we'll ned a function
+inline vec3 random_in_unit_disk()
+{
+    while (true)
+    {
+        auto p = vec3(random_double(-1, 1), random_double(-1, 1), 0);
+        if (p.length_squared() < 1)
+            return p;
+    }
+}
 // refraction is described by snell's law η⋅sinθ=η′⋅sinθ′
 // given R′⊥=ηη′(R+(−R⋅n)n), compute R'
 inline vec3 refract(const vec3 &uv, const vec3 &n, double etai_over_etat)

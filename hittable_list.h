@@ -7,6 +7,8 @@
 
 #include "hittable.h"
 
+#include "aabb.h"
+
 #include <memory>
 #include <vector>
 
@@ -49,6 +51,19 @@ public:
         }
 
         return hit_anything;
+    }
+
+    aabb bounding_box() const override
+    {
+        if (objects.empty())
+            return aabb();
+
+        aabb result = objects[0]->bounding_box();
+        for (size_t i = 1; i < objects.size(); i++)
+        {
+            result = aabb::surrounding_box(result, objects[i]->bounding_box());
+        }
+        return result;
     }
 };
 

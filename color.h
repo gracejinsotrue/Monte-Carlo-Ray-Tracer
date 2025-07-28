@@ -15,25 +15,28 @@ inline double linear_to_gamma(double linear_component)
 
     return 0;
 }
-
 void write_color(std::ostream &out, const color &pixel_color)
 {
     auto r = pixel_color.x();
     auto g = pixel_color.y();
     auto b = pixel_color.z();
 
-    // apply a linear to gamma transform for gamma 2 so our shit looks brighter on the screen
+    // Apply gamma correction
     r = linear_to_gamma(r);
     g = linear_to_gamma(g);
     b = linear_to_gamma(b);
 
-    // Translate the [0,1] component values to the byte range [0,255].
-    static const interval intensity(0.000, 0.999);
-    int rbyte = int(256 * intensity.clamp(r));
-    int gbyte = int(256 * intensity.clamp(g));
-    int bbyte = int(256 * intensity.clamp(b));
+    // Simple clamping w/o intval class (broke for some reason_)
+    r = std::max(0.0, std::min(0.999, r));
+    g = std::max(0.0, std::min(0.999, g));
+    b = std::max(0.0, std::min(0.999, b));
 
-    // Write out the pixel color components.
+    // Convert to byte values
+    int rbyte = int(256 * r);
+    int gbyte = int(256 * g);
+    int bbyte = int(256 * b);
+
+    // Write out the pixel color components
     out << rbyte << ' ' << gbyte << ' ' << bbyte << '\n';
 }
 

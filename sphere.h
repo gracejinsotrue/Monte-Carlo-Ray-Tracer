@@ -3,6 +3,7 @@
 
 #include "hittable.h"
 #include "vec3.h"
+#include "aabb.h"
 #include <cmath>
 
 class sphere : public hittable
@@ -11,7 +12,7 @@ public:
     // finally init the sphere with a material
     sphere(const point3 &center, double radius, shared_ptr<material> mat)
         : center(center), radius(std::fmax(0, radius)), mat(mat) {}
-    // bool hit(const ray &r, double ray_tmin, double ray_tmax, hit_record &rec) const override
+
     bool hit(const ray &r, interval ray_t, hit_record &rec) const override
     {
         vec3 oc = center - r.origin();
@@ -41,9 +42,15 @@ public:
         rec.set_face_normal(r, outward_normal);
 
         rec.mat = mat;
-        // rec.normal = (rec.p - center) / radius;
 
         return true;
+    }
+
+    // add bounding box method for BVH
+    aabb bounding_box() const
+    {
+        auto radius_vec = vec3(radius, radius, radius);
+        return aabb(center - radius_vec, center + radius_vec);
     }
 
 private:

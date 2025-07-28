@@ -1,36 +1,15 @@
 #include "rtweekend.h"
 #include "camera.h"
-#include "hittable.h"
 #include "hittable_list.h"
 #include "material.h"
 #include "sphere.h"
+#include "triangle.h"
+#include "bvh.h"
+#include <chrono>
 
-int main()
+void create_impressive_scene(hittable_list &world)
 {
-    // World
-    hittable_list world;
-    // // code to est my fatass angle camera
-    // auto R = std::cos(pi / 4);
-
-    // auto material_left = make_shared<lambertian>(color(0, 0, 1));
-    // auto material_right = make_shared<lambertian>(color(1, 0, 0));
-
-    // world.add(make_shared<sphere>(point3(-R, 0, -1), R, material_left));
-    // world.add(make_shared<sphere>(point3(R, 0, -1), R, material_right));
-
-    // // we add metal and lambertian type spheres to da world
-    // auto material_ground = make_shared<lambertian>(color(0.8, 0.8, 0.0));
-    // auto material_center = make_shared<lambertian>(color(0.1, 0.2, 0.5));
-    // auto material_left = make_shared<dielectric>(1.50);
-    // auto material_bubble = make_shared<dielectric>(1.00 / 1.50);
-    // auto material_right = make_shared<metal>(color(0.8, 0.6, 0.2), 1.0); // aside from color, add fuzziness paameter to the metals
-
-    // world.add(make_shared<sphere>(point3(0.0, -100.5, -1.0), 100.0, material_ground));
-    // world.add(make_shared<sphere>(point3(0.0, 0.0, -1.2), 0.5, material_center));
-    // world.add(make_shared<sphere>(point3(-1.0, 0.0, -1.0), 0.5, material_left));
-    // world.add(make_shared<sphere>(point3(-1.0, 0.0, -1.0), 0.4, material_bubble));
-    // world.add(make_shared<sphere>(point3(1.0, 0.0, -1.0), 0.5, material_right));
-
+    // Ground
     auto ground_material = make_shared<lambertian>(color(0.5, 0.5, 0.5));
     world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, ground_material));
     // final render for now! we will make a lot of random spheres and render theem
@@ -57,7 +36,7 @@ int main()
                     // metal
                     auto albedo = color::random(0.5, 1);
                     auto fuzz = random_double(0, 0.5);
-                    sphere_material = make_shared<metal>(albedo, fuzz);
+                    sphere_material = make_shared<metal>(albedo, fuzz); // aside from color, add fuzziness paameter to the metals
                     world.add(make_shared<sphere>(center, 0.2, sphere_material));
                 }
                 else
@@ -70,6 +49,7 @@ int main()
         }
     }
 
+    // three hero spheres
     auto material1 = make_shared<dielectric>(1.5);
     world.add(make_shared<sphere>(point3(0, 1, 0), 1.0, material1));
 
@@ -78,6 +58,36 @@ int main()
 
     auto material3 = make_shared<metal>(color(0.7, 0.6, 0.5), 0.0);
     world.add(make_shared<sphere>(point3(4, 1, 0), 1.0, material3));
+
+    // add in trianglse because why not
+    auto triangle_material = make_shared<metal>(color(0.8, 0.3, 0.3), 0.1);
+
+    // a few triangular "sails" or "fins"
+    world.add(make_shared<triangle>(
+        point3(2, 0, 2), point3(3, 2, 2), point3(2, 2, 3), triangle_material));
+    world.add(make_shared<triangle>(
+        point3(-2, 0, 2), point3(-3, 2, 2), point3(-2, 2, 3), triangle_material));
+}
+
+int main()
+{
+    // World
+    hittable_list world;
+
+    // create an impressive scene with many objects
+    create_impressive_scene(world);
+
+    std::cerr << "Scene created with " << world.objects.size() << " objects" << std::endl;
+
+    // Build BVH
+    std::cerr << "Building BVH..." << std::endl;
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    auto bvh_world = make_shared<bvh_node>(world);
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+    std::cerr << "BVH built in " << duration.count() << " ms" << std::endl;
 
     // Camera
     camera cam;
@@ -94,18 +104,27 @@ int main()
     // cam.defocus_angle = 10.0;
     // cam.focus_dist = 3.4;
     cam.aspect_ratio = 16.0 / 9.0;
-    cam.image_width = 1200;
-    cam.samples_per_pixel = 500;
+    cam.image_width = 800;      // Higher resolution
+    cam.samples_per_pixel = 50; // change samples per pixel to larger numbr for mor accurate image, but for runtime purposes and my laptop not dying, let's go with this for now
     cam.max_depth = 50;
 
     cam.vfov = 20;
-    cam.lookfrom = point3(13, 2, 3);
+    cam.lookfrom = point3(13, 2, 3); // Better camera position
     cam.lookat = point3(0, 0, 0);
     cam.vup = vec3(0, 1, 0);
 
-    cam.defocus_angle = 0.6;
+    cam.defocus_angle = 0.6; // Add depth of field
     cam.focus_dist = 10.0;
 
-    // Render
-    cam.render(world);
+    std::cerr << "Starting render..." << std::endl;
+    start_time = std::chrono::high_resolution_clock::now();
+
+    // Render with BVH
+    cam.render(*bvh_world);
+
+    end_time = std::chrono::high_resolution_clock::now();
+    auto render_duration = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
+    std::cerr << "Render completed in " << render_duration.count() << " seconds" << std::endl;
+
+    return 0;
 }
